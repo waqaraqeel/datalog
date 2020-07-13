@@ -173,7 +173,7 @@ isidpart(int ch)       /* May character be a part of an identifier? */
   case '.':
   case '~':
   case '?':
-  case ':':
+  // case ':':
   case '"':
   case '%':
     return 0;
