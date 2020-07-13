@@ -423,6 +423,7 @@ main(int argc, char **argv)
   }
 
   db = dl_open();
+  luaL_openlibs(db);
   if (!db) {
     fprintf(stderr, "Internal error\n");
     return 1;
