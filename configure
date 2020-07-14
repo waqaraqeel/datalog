@@ -12398,7 +12398,7 @@ else
 fi
 
 
-ac_config_files="$ac_config_files Makefile lua/Makefile datalog.spec datalog.lua"
+ac_config_files="$ac_config_files Makefile datalog.spec datalog.lua"
 
 
 cat >confcache <<\_ACEOF
