@@ -17,6 +17,8 @@ interpreter into C programs.
 
 INSTALLATION
 
+Please read INSTALL2 before proceeeding.
+
 Install using the usual "./configure; make; make install" sequence as
 described in the file INSTALL.
 

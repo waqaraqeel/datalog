@@ -1,0 +1,9 @@
+The bundled lua has been removed. Lua is now an external dependency.
+
+Please install lua 5.3 using your package manager.
+Then run:
+    ./configure CPPFLAGS=-I<lua-include> --with-lua
+
+where <lua-include> is the lua include path (e.g. /usr/local/include/lua).
+
+After that, the usual "make" and "sudo make install" should work.
