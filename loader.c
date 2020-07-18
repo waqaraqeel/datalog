@@ -88,7 +88,7 @@ chk_file_line(loader_t *l, int i, const char *file, int line)
 
 typedef enum {			/* Tokens returned by the scanner. */
   ID, VAR, LPAREN, RPAREN, EQUAL, COMMA,
-  IMPLY, PERIOD, TILDE, QUESTION, DONE, BAD
+  IMPLY, PERIOD, TILDE, QUESTION, NEGATION, DONE, BAD
 } token_t;
 
 static void
@@ -543,6 +543,13 @@ scan(loader_t *l)	       /* Entry point for lexical analysis. */
       return BAD;
   case '"':
     return addstr(l);
+  case '\\':
+    ch = getch(l);
+    if (ch == '+') {
+      return NEGATION;
+    }
+    else
+      return BAD;
   default:
     if (isidstart(ch))
       return addid(l);
@@ -570,7 +577,7 @@ term(loader_t *l)		/* Parse a term. Assumes a */
 }
 
 static token_t			/* Parse a literal.  Assumes an */
-literal(loader_t *l, token_t token) /* incomplete literal is on the */
+literal(loader_t *l, token_t token, int neg) /* incomplete literal is on the */
 {				/* stack.  Returns the token */
   if (token == ID) {		/* that follows the literal. */
     token = scan(l);
@@ -580,7 +587,11 @@ literal(loader_t *l, token_t token) /* incomplete literal is on the */
       chk(l, dl_pushstring(l->db, EQUALS_PRED));
       chk(l, dl_addpred(l->db));
       term(l);
-      chk(l, dl_makeliteral(l->db));
+      if (neg) {
+        chk(l, dl_makenegliteral(l->db));
+      } else {
+        chk(l, dl_makeliteral(l->db));
+      }
       return scan(l);
     case PERIOD:
     case COMMA:
@@ -588,7 +599,11 @@ literal(loader_t *l, token_t token) /* incomplete literal is on the */
     case TILDE:
     case QUESTION:
       chk(l, dl_addpred(l->db)); /* Handle a predicate with */
-      chk(l, dl_makeliteral(l->db)); /* an arity of zero. */
+      if (neg) {
+        chk(l, dl_makenegliteral(l->db));
+      } else {
+        chk(l, dl_makeliteral(l->db));
+      } /* an arity of zero. */
       return token;
     case LPAREN:
       chk(l, dl_addpred(l->db)); /* Handle a predicate with */
@@ -596,7 +611,11 @@ literal(loader_t *l, token_t token) /* incomplete literal is on the */
       for (;;) {
 	token = scan(l);
 	if (token == RPAREN) {
-	  chk(l, dl_makeliteral(l->db));
+	  if (neg) {
+        chk(l, dl_makenegliteral(l->db));
+    } else {
+        chk(l, dl_makeliteral(l->db));
+    }
 	  return scan(l);
 	}
 	else if (token == COMMA)
@@ -620,8 +639,16 @@ literal(loader_t *l, token_t token) /* incomplete literal is on the */
     chk(l, dl_pushstring(l->db, EQUALS_PRED));
     chk(l, dl_addpred(l->db));
     term(l);
-    chk(l, dl_makeliteral(l->db));
+    if (neg) {
+        chk(l, dl_makenegliteral(l->db));
+    } else {
+        chk(l, dl_makeliteral(l->db));
+    }
     return scan(l);
+  }
+  else if (token == NEGATION) {
+    token = scan(l);
+    literal(l, token, 1);
   }
   else {
     err(l, "syntax error while expecting a predicate");
@@ -636,11 +663,11 @@ rule(loader_t *l)		/* Assumes a literal is on the */
   token_t token;
   chk(l, dl_pushhead(l->db));
   chk(l, dl_pushliteral(l->db));
-  token = literal(l, scan(l));
+  token = literal(l, scan(l), 0);
   while (token == COMMA) {
     chk(l, dl_addliteral(l->db));
     chk(l, dl_pushliteral(l->db));
-    token = literal(l, scan(l));
+    token = literal(l, scan(l), 0);
   }
   chk(l, dl_addliteral(l->db));
   chk(l, dl_makeclause(l->db));
@@ -683,7 +710,7 @@ program(loader_t *l)		/* Parses a complete program. */
       falsehood(l);		/* Push a false literal */
       return;			/* as the query. */
     }
-    token = literal(l, token);
+    token = literal(l, token, 0);
     switch (token) {
     case PERIOD:		/* Assert a fact. */
       chk(l, dl_pushhead(l->db));

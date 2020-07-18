@@ -164,6 +164,18 @@ local function make_literal(pred_name, terms)
    return literal
 end
 
+-- Same as make_literal. Marks literal negative
+
+local function make_neg_literal(pred_name, terms)
+   local arity = #terms
+   local pred = make_pred(pred_name, arity)
+   local literal = {pred = pred, neg = true}
+   for i=1,arity do
+      literal[i] = terms[i]
+   end
+   return literal
+end
+
 local function add_size(str)
    return tostring(string.len(str)) .. ":" .. str
 end
@@ -237,7 +249,7 @@ local function subst(literal, env)
       return literal
    end
    local arity = #literal
-   local new = {pred = literal.pred}
+   local new = {pred = literal.pred, neg = literal.neg}
    for i=1,arity do
       new[i] = literal[i]:subst(env)
    end
@@ -660,12 +672,19 @@ function search(subgoal)
    if literal.pred.prim then
       return literal.pred.prim(literal, subgoal)
    else
-      for id,clause in pairs(literal.pred.db) do
+      local any_unified = false
+     for id,clause in pairs(literal.pred.db) do
 	 local renamed = rename_clause(clause)
 	 local env = unify(literal, renamed.head)
 	 if env then
+            any_unified = true
+            if not literal.neg then
 	    add_clause(subgoal, subst_in_clause(renamed, env))
 	 end
+      end
+   end
+      if not any_unified and subgoal.literal.neg then
+         return fact(subgoal, subgoal.literal)
       end
    end
 end
@@ -800,7 +819,7 @@ local function add_iter_prim(name, arity, iter)
       for terms in iter(literal) do
 	 local n = #terms
 	 if n == arity then
-	    local new = {pred = pred}
+	    local new = {pred = pred, neg = literal.neg}
 	    for i=1,n do
 	       new[i] = make_const(terms[i])
 	    end
@@ -892,6 +911,13 @@ function dl_makeliteral(tbl)
    return tbl
 end
 
+function dl_makenegliteral(tbl)
+   tbl.pred = make_pred(tbl.name, #tbl)
+   tbl.name = nil
+   tbl.neg = true
+   return tbl
+end
+
 function dl_pushhead(literal)
    return {head = literal}
 end
@@ -944,6 +970,7 @@ datalog = {
    get_name = get_name,
    get_arity = get_arity,
    make_literal = make_literal,
+   make_neg_literal = make_neg_literal,
    make_clause = make_clause,
    insert = insert,
    remove = remove,

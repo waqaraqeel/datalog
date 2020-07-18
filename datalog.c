@@ -209,6 +209,19 @@ dl_makeliteral(dl_db_t L)
   return dl_pcall(L, 1, 1);
 }
 
+/* Stack: ... table -> ... literal */
+DATALOG_API int
+dl_makenegliteral(dl_db_t L)
+{
+  printf("making neg literal\n");
+  fflush(stdout);
+  if (!lua_checkstack(L, 1))
+    return 1;
+  lua_getglobal(L, "dl_makenegliteral");
+  lua_insert(L, -2);
+  return dl_pcall(L, 1, 1);
+}
+
 /* Stack: ... literal -> ... table */
 DATALOG_API int
 dl_pushhead(dl_db_t L)

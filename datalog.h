@@ -113,6 +113,11 @@ DATALOG_API int dl_addconst(dl_db_t db);
    symbol.  Leaves a completed literal on the top of the stack. */
 DATALOG_API int dl_makeliteral(dl_db_t db);
 
+/* Finish making a literal after adding all terms and one predicate
+   symbol.  Leaves a completed literal on the top of the stack.
+   Marks it negated. */
+DATALOG_API int dl_makenegliteral(dl_db_t db);
+
 /* Clauses */
 
 /* Make a literal and then use this to start a clause.  Pops a
