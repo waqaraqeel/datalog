@@ -213,8 +213,6 @@ dl_makeliteral(dl_db_t L)
 DATALOG_API int
 dl_makenegliteral(dl_db_t L)
 {
-  printf("making neg literal\n");
-  fflush(stdout);
   if (!lua_checkstack(L, 1))
     return 1;
   lua_getglobal(L, "dl_makenegliteral");
