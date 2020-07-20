@@ -600,6 +600,9 @@ end
 -- one less literal.
 
 local function resolve(clause, literal)
+   if clause[1].neg then
+      return nil
+   end
    local n = #clause
    if n == 0 then
       return nil
@@ -640,7 +643,9 @@ function rule(subgoal, clause, selected)
    if sg then
       table.insert(sg.waiters, {subgoal = subgoal, clause = clause})
       local todo = {}
+      local facts = 0
       for id,fact in pairs(sg.facts) do
+         facts = facts + 1
 	 local resolvent = resolve(clause, fact)
 	 if resolvent then
 	    table.insert(todo, resolvent)
@@ -649,11 +654,22 @@ function rule(subgoal, clause, selected)
       for i=1,#todo do
 	 add_clause(subgoal, todo[i])
       end
+      if facts == 0 and clause[1].neg then
+         fact(subgoal, subgoal.literal)
+      end
    else
       sg = make_subgoal(selected)
       table.insert(sg.waiters, {subgoal = subgoal, clause = clause})
       merge(sg)
-      return search(sg)
+      local val = search(sg)
+      local answers = 0
+      for id,ans in pairs(sg.facts) do
+         answers = answers + 1
+         end
+      if sg.literal.neg and answers == 0 then
+         fact(subgoal, subgoal.literal)
+      end
+      return val
    end
 end
 
@@ -672,22 +688,15 @@ function search(subgoal)
    if literal.pred.prim then
       return literal.pred.prim(literal, subgoal)
    else
-      local any_unified = false
      for id,clause in pairs(literal.pred.db) do
 	 local renamed = rename_clause(clause)
 	 local env = unify(literal, renamed.head)
 	 if env then
-            any_unified = true
-            if not literal.neg then
-	    add_clause(subgoal, subst_in_clause(renamed, env))
+            add_clause(subgoal, subst_in_clause(renamed, env))
 	 end
       end
    end
-      if not any_unified and subgoal.literal.neg then
-         return fact(subgoal, subgoal.literal)
-      end
    end
-end
 
 -- Sets up and calls the subgoal search procedure, and then extracts
 -- the answers into an easily used table.  The table has the name of
@@ -774,6 +783,29 @@ do				-- equals primitive
 
    binary_equals_pred.prim = equals_primitive
 end
+
+-- Print function. Useful for debugging
+function pliteral(literal)
+   local res = ""
+   for i=1,#literal do
+      res = res .. ", " .. literal[i].id
+   end
+   if literal.neg then
+      return "\\+" .. literal.pred.id .. "(" .. res .. ")"
+   else
+      return literal.pred.id .. "(" .. res .. ")"
+   end
+end
+
+-- Print function. Useful for debugging
+function pclause(clause)
+   local res = pliteral(clause.head) .. ":- "
+   for i=1,#clause do
+      res = pliteral(clause[i]) .. ", "
+   end
+   return res
+end
+
 
 -- Does a literal unify with an fact known to contain only constant
 -- terms?
