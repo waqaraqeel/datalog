@@ -1,6 +1,12 @@
-			       Datalog
+#Datalog
 
-ABSTRACT
+This repo has been forked from [MTRE Datalog](http://datalog.sourceforge.net/datalog.html). Some changes include:
+1. Allow `:` in identifier names as rudimentary ``namespace'' support
+2. Extensional Lua extensions allowed when creating primitives
+3. Stratified negation added with `\+` syntax
+4. Removed the embedded Lua. Lua is now an external dependency
+
+##ABSTRACT
 
 This package contains a lightweight deductive database system.
 Queries and database updates are expressed using Datalog--a
@@ -15,27 +21,29 @@ memory constrained devices.  The package includes an interactive
 interpreter for Datalog, and a library that can be used to embed the
 interpreter into C programs.
 
-INSTALLATION
+##INSTALLATION
 
-Please read INSTALL2 before proceeeding.
+Please read `INSTALL2` before proceeeding.
 
-Install using the usual "./configure; make; make install" sequence as
+Install using the usual `./configure; make; make install` sequence as
 described in the file INSTALL.
 
 If you have Lua 5.2 installed, configure with the --with-lua option.
 On Debian-based systems, use:
 
+```
     $ ./configure --with-lua-suffix=5.2 CPPFLAGS=-I/usr/include/lua5.2
+```
 
 Datalog can be built on top of Lua 5.1 too.
 
-DOCUMENTATION
+##DOCUMENTATION
 
 This package is documented using Texinfo and a manual page.  The NEWS
 file contains a history of user-visible changes.  The ChangeLog
 records changes to the package.
 
-TEST SUITE
+##TEST SUITE
 
 The source distribution contains examples of Datalog programs used for
 testing that are not installed.  Examples from the Texinfo manual are
