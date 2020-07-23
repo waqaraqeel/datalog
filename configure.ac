@@ -42,4 +42,7 @@ AM_CONDITIONAL([NO_LUA], [test "x$with_lua" = xno -a -z "$with_lua_suffix"])
 
 AC_CONFIG_FILES([Makefile datalog.spec datalog.lua])
 
+# avoids issue from no ./README 
+AM_INIT_AUTOMAKE([foreign])
+
 AC_OUTPUT
