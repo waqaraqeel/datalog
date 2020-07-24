@@ -10,6 +10,7 @@ dist_noinst_SCRIPTS = datalogimport datalogexport
 
 libdatalog_la_SOURCES = datalog.h loader.c datalog.c
 libdatalog_la_LDFLAGS = -version-info 0:0:0
+LDFLAGS = -Wl,--no-as-needed -ldl
 
 datalog_SOURCES = interp.c
 datalog_LDADD = libdatalog.la $(LOCAL_LIBLUA)

@@ -1,6 +1,7 @@
 The bundled lua has been removed. Lua is now an external dependency.
 
 Please install lua 5.3 using your package manager.
+Also install Automake 1.16 and Libtool.
 Then run:
     ./configure CPPFLAGS=-I<lua-include> --with-lua
 
