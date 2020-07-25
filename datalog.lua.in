@@ -597,8 +597,8 @@ end
 -- two literals unify, a new clause is generated that has a body with
 -- one less literal.
 
-local function resolve(clause, literal)
-    if clause[1].neg then
+local function resolve(clause, literal, take_neg)
+    if clause[1].neg and not take_neg then
         return nil
     end
     local n = #clause
@@ -626,7 +626,7 @@ function fact(subgoal, literal)
         adjoin(literal, subgoal.facts)
         for i = 1, #subgoal.waiters do
             local waiter = subgoal.waiters[i]
-            local resolvent = resolve(waiter.clause, literal)
+            local resolvent = resolve(waiter.clause, literal, false)
             if resolvent then
                 add_clause(waiter.subgoal, resolvent)
             end
@@ -644,7 +644,7 @@ function rule(subgoal, clause, selected)
         local facts = 0
         for id, fact in pairs(sg.facts) do
             facts = facts + 1
-            local resolvent = resolve(clause, fact)
+            local resolvent = resolve(clause, fact, false)
             if resolvent then
                 table.insert(todo, resolvent)
             end
@@ -653,7 +653,10 @@ function rule(subgoal, clause, selected)
             add_clause(subgoal, todo[i])
         end
         if facts == 0 and clause[1].neg then
-            fact(subgoal, subgoal.literal)
+            local resolvent = resolve(clause, selected, true)
+            if resolvent then
+                add_clause(subgoal, resolvent)
+            end
         end
     else
         sg = make_subgoal(selected)
@@ -665,7 +668,10 @@ function rule(subgoal, clause, selected)
             answers = answers + 1
         end
         if sg.literal.neg and answers == 0 then
-            fact(subgoal, subgoal.literal)
+            local resolvent = resolve(clause, selected, true)
+            if resolvent then
+                add_clause(subgoal, resolvent)
+            end
         end
         return val
     end
