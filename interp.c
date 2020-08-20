@@ -23,8 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <lua.h>
 #include <lauxlib.h>
+#include <lualib.h>
 #if defined HAVE_LIBREADLINE
 #if defined HAVE_READLINE_READLINE_H
 #include <readline/readline.h>
@@ -66,11 +68,18 @@ usage(const char *prog)
 	  "  -o file -- output to file (default is standard output)\n"
 	  "  -i      -- enter interactive mode after loading file\n"
 	  "  -l file -- load extensions written in Lua\n"
+	  "  -p      -- print timing profile\n"
 	  "  -t      -- print output as tab separated values\n"
 	  "  -v      -- print version information\n"
 	  "  -h      -- print this message\n"
 	  "Use - as a file name to specify standard input\n",
 	  prog);
+}
+
+uint64_t gettimestamp() {
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 }
 
 /* A datalog answer printer using datalog syntax. */
@@ -357,6 +366,14 @@ main(int argc, char **argv)
   extern int optind;
 
   int interact = 0;
+
+  int profile = 0;
+  uint64_t dawn = 0;
+  uint64_t eng_done = 0;
+  uint64_t ext_done = 0;
+  uint64_t qur_done = 0;
+  uint64_t dusk = 0;
+
   char *input = NULL;
   char *output = NULL;
   char *lua = NULL;
@@ -367,7 +384,7 @@ main(int argc, char **argv)
   int rc;
 
   for (;;) {
-    int c = getopt(argc, argv, "o:il:tvh");
+    int c = getopt(argc, argv, "o:il:ptvh");
     if (c == -1)
       break;
     switch (c) {
@@ -379,6 +396,9 @@ main(int argc, char **argv)
       break;
     case 'l':
       lua = optarg;
+      break;
+    case 'p':
+      profile = 1;
       break;
     case 't':
       print_as_tsv = 1;
@@ -394,6 +414,9 @@ main(int argc, char **argv)
       return 1;
     }
   }
+
+  if (profile)
+    dawn = gettimestamp();
 
   switch (argc - optind) {
   case 0:			/* Use stdin */
@@ -429,6 +452,9 @@ main(int argc, char **argv)
     return 1;
   }
 
+  if (profile)
+    eng_done = gettimestamp();
+
   if (lua) {			/* Load Lua extensions if present  */
     rc = luaL_dofile(db, lua);
     if (rc) {
@@ -441,11 +467,25 @@ main(int argc, char **argv)
     }
   }
 
+  if (profile)
+    ext_done = gettimestamp();
+
   rc = 0;
-  if (in)
+  if (in) {
     rc = loadfile(db, in, input);
+    if (profile)
+      qur_done = gettimestamp();
+  }
   if (interact && !rc)
     rc = interp(db);
   dl_close(db);			/* Allow valgrind leak check. */
+
+  if (profile) {
+    dusk = gettimestamp();
+    fprintf(stderr, "Total = %.2fms\n", (dusk - dawn) / 1000.0);
+    fprintf(stderr, "Engine = %.2fms\n", (eng_done - dawn) / 1000.0);
+    fprintf(stderr, "Extensions = %.2fms\n", (ext_done - eng_done) / 1000.0);
+    fprintf(stderr, "Query = %.2fms\n", (qur_done - ext_done) / 1000.0);
+  }
   return rc;
 }
