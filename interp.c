@@ -208,7 +208,7 @@ leave(int rc, FILE *in)
 }
 
 static int
-loadfile(dl_db_t db, FILE *in, const char *filename)
+loadfile(dl_db_t db, FILE *in, const char *filename, uint64_t* load_done)
 {				/* Read, evaluate, and print */
   int rc;			/* for a file. */
   dl_answers_t a;
@@ -216,6 +216,9 @@ loadfile(dl_db_t db, FILE *in, const char *filename)
   lf.filename = filename;
   lf.in = in;
   rc = dl_load(db, getbuf, loaderror, &lf); /* Read. */
+  if (load_done) {
+    *load_done = gettimestamp();
+  }
   if (rc)
     return leave(rc, in);
   rc = dl_ask(db, &a);		/* Eval. */
@@ -286,7 +289,7 @@ getaline(void *data, size_t *size)
     if (!in)			/* of input--!nofile check.*/
       perror(buf + 1);
     else
-      loadfile(lb->db, in, buf + 1);
+      loadfile(lb->db, in, buf + 1, NULL);
     lb->done = 1;		/* Consider the current input */
     return NULL;		/* as containing no data. */
   }
@@ -372,6 +375,7 @@ main(int argc, char **argv)
   uint64_t eng_done = 0;
   uint64_t ext_done = 0;
   uint64_t qur_done = 0;
+  uint64_t load_done = 0;
   uint64_t dusk = 0;
 
   char *input = NULL;
@@ -472,7 +476,7 @@ main(int argc, char **argv)
 
   rc = 0;
   if (in) {
-    rc = loadfile(db, in, input);
+    rc = loadfile(db, in, input, &load_done);
     if (profile)
       qur_done = gettimestamp();
   }
@@ -485,7 +489,8 @@ main(int argc, char **argv)
     fprintf(stderr, "Total = %.2fms\n", (dusk - dawn) / 1000.0);
     fprintf(stderr, "Engine = %.2fms\n", (eng_done - dawn) / 1000.0);
     fprintf(stderr, "Extensions = %.2fms\n", (ext_done - eng_done) / 1000.0);
-    fprintf(stderr, "Query = %.2fms\n", (qur_done - ext_done) / 1000.0);
+    fprintf(stderr, "Parsing = %.2fms\n", (load_done - ext_done) / 1000.0);
+    fprintf(stderr, "Evaluating = %.2fms\n", (qur_done - load_done) / 1000.0);
   }
   return rc;
 }
