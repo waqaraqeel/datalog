@@ -224,6 +224,11 @@ loadfile(dl_db_t db, FILE *in, const char *filename, uint64_t* load_done)
   rc = dl_ask(db, &a);		/* Eval. */
   if (rc)
     return leave(rc, in);
+  /* Return error if no answers from file */
+  if (!a) {
+    leave(0, in);
+    return 1;
+  }
   return leave(print_answers(a), in); /* Print. */
 }
 
