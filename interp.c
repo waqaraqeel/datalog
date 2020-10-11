@@ -485,7 +485,7 @@ main(int argc, char **argv)
     if (profile)
       qur_done = gettimestamp();
   }
-  if (interact && !rc)
+  if (interact)
     rc = interp(db);
   dl_close(db);			/* Allow valgrind leak check. */
 
