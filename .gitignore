@@ -1,21 +1,12 @@
-.deps/
-.libs/
-Makefile
+# Project-specific
 bin2c
-bin2c.o
-config.log
-config.status
 datalog
-datalog.lo
 datalog.lua
-datalog.o
 datalog.spec
 dl_lua.h
-interp.o
-libdatalog.la
 libtool
-loader.lo
-loader.o
+.libs/libdatalog.lai
+
 
 # Prerequisites
 *.d
