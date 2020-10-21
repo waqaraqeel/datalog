@@ -63,7 +63,8 @@ static void
 usage(const char *prog)
 {
   fprintf(stderr,
-	  "Usage: %s [options] [file]\n"
+	  "Usage: %s [options] [files]\n"
+    "[files] is a list of space-separated filenames to load\n"
 	  "Options:\n"
 	  "  -o file -- output to file (default is standard output)\n"
 	  "  -i      -- enter interactive mode after loading file\n"
@@ -71,8 +72,7 @@ usage(const char *prog)
 	  "  -p      -- print timing profile\n"
 	  "  -t      -- print output as tab separated values\n"
 	  "  -v      -- print version information\n"
-	  "  -h      -- print this message\n"
-	  "Use - as a file name to specify standard input\n",
+	  "  -h      -- print this message\n",
 	  prog);
 }
 
@@ -387,7 +387,7 @@ main(int argc, char **argv)
   char *output = NULL;
   char *lua = NULL;
 
-  FILE *in = NULL;
+  FILE **input_files = NULL;
 
   dl_db_t db;
   int rc;
@@ -431,22 +431,16 @@ main(int argc, char **argv)
   case 0:			/* Use stdin */
     interact = 1;
     break;
-  case 1:
-    input = argv[optind];
-    if (strcmp(STDIN_NAME, input)) {
-      in = fopen(input, "r");
-      if (!in) {
-	perror(input);
-	return 1;
+  default:
+    input_files = (FILE**) malloc((argc - optind) * sizeof(FILE*));
+    for(int i = optind; i < argc; i++) {
+      input = argv[i];
+      input_files[i-optind] = fopen(input, "r");
+      if (!input_files[i-optind]) {
+        perror(input);
+        return 1;
       }
     }
-    else
-      in = stdin;
-    break;
-  default:
-    fprintf(stderr, "Bad arg count\n");
-    usage(argv[0]);
-    return 1;
   }
 
   if (output && !freopen(output, "w", stdout)) {
@@ -480,10 +474,12 @@ main(int argc, char **argv)
     ext_done = gettimestamp();
 
   rc = 0;
-  if (in) {
-    rc = loadfile(db, in, input, &load_done);
-    if (profile)
-      qur_done = gettimestamp();
+  if (input_files) {
+    for(int i = 0; i < argc-optind; i++) {
+      rc = loadfile(db, input_files[i], argv[i+optind], &load_done);
+      if (profile)
+        qur_done = gettimestamp();
+    }
   }
   if (interact)
     rc = interp(db);
