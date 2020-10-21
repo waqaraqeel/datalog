@@ -477,9 +477,9 @@ main(int argc, char **argv)
   if (input_files) {
     for(int i = 0; i < argc-optind; i++) {
       rc = loadfile(db, input_files[i], argv[i+optind], &load_done);
-      if (profile)
-        qur_done = gettimestamp();
     }
+    if (profile)
+      qur_done = gettimestamp();
   }
   if (interact)
     rc = interp(db);
