@@ -7,10 +7,14 @@ dist_man_MANS = datalog.1
 noinst_PROGRAMS = bin2c
 dist_noinst_SCRIPTS = datalogimport datalogexport
 
+if NO_LUA
+  SUBDIRS = lua
+  AM_CPPFLAGS = -I$(srcdir)/lua
+  LOCAL_LIBLUA = lua/liblua.a
+endif
 
 libdatalog_la_SOURCES = datalog.h loader.c datalog.c
 libdatalog_la_LDFLAGS = -version-info 0:0:0
-LDFLAGS = -Wl,--no-as-needed -ldl
 
 datalog_SOURCES = interp.c
 datalog_LDADD = libdatalog.la $(LOCAL_LIBLUA)
